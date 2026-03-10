@@ -50,6 +50,11 @@ export function useSpeech(): UseSpeechReturn {
                 // 既に処理された final result のインデックスを追跡する
                 let lastProcessedIndex = -1;
 
+                recognitionRef.current.onstart = () => {
+                    // 自動再起動などでセッションが新しくなるたびにインデックスをリセットする
+                    lastProcessedIndex = -1;
+                };
+
                 recognitionRef.current.onresult = (event: any) => {
                     let interim = '';
                     let final = '';
