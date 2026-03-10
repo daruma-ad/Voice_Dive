@@ -10,9 +10,11 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.0-flash"
 
     # CORS
-    cors_origins: list[str] = [
+    cors_origins: str | list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://voice-dive.vercel.app",
+        "*"
     ]
 
     # App
