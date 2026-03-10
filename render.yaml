@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: voicedive-api
+    env: python
+    region: singapore # or oregon, ohio, frankfurt
+    rootDir: backend
+    buildCommand: uv pip install -r requirements.txt || pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: VOICEDIVE_GEMINI_API_KEY
+        sync: false
+      - key: DEBUG
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        value: "*" # 本番時はフロントエンドのURL（例：https://voicedive.vercel.app）に変更
