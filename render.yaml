@@ -3,6 +3,7 @@ services:
     name: voicedive-api
     env: python
     region: singapore # or oregon, ohio, frankfurt
+    plan: free # 強制的に無料枠を使用
     rootDir: backend
     buildCommand: uv pip install -r requirements.txt || pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
