@@ -22,7 +22,7 @@ import {
 
 // Flag to switch between Firestore and mock data
 // Set to true when Firebase is properly configured
-const USE_FIRESTORE = false;
+const USE_FIRESTORE = true;
 
 /**
  * Fetch all candidates from Firestore or mock data

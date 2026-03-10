@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, ArrowUpDown, Clock, Users, TrendingUp } from 'lucide-react';
-import { candidates, formatDate } from '@/lib/mockData';
+import { formatDate } from '@/lib/mockData';
 import type { Rank, InterviewStatus } from '@/lib/mockData';
+import { useCandidates } from '@/hooks/useFirestore';
 import RankBadge from '@/components/RankBadge';
 
 type SortKey = 'date' | 'score' | 'rank' | 'name';
@@ -28,38 +29,33 @@ export default function DashboardPage() {
     const [sortKey, setSortKey] = useState<SortKey>('date');
     const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-    const filtered = candidates
-        .filter((c) => {
-            const matchesSearch =
-                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                c.nameReading.includes(searchQuery) ||
-                c.nationality.includes(searchQuery) ||
-                c.desiredPosition.includes(searchQuery);
-            const matchesRank = filterRank === 'all' || c.rank === filterRank;
-            return matchesSearch && matchesRank;
-        })
-        .sort((a, b) => {
-            const dir = sortDir === 'asc' ? 1 : -1;
-            switch (sortKey) {
-                case 'date':
-                    return dir * (new Date(a.interviewDate).getTime() - new Date(b.interviewDate).getTime());
-                case 'score':
-                    return dir * (a.overallScore - b.overallScore);
-                case 'rank':
-                    return dir * a.rank.localeCompare(b.rank);
-                case 'name':
-                    return dir * a.name.localeCompare(b.name);
-                default:
-                    return 0;
-            }
-        });
+    const { candidates, loading, error } = useCandidates({
+        rank: filterRank,
+        searchQuery: searchQuery
+    });
+
+    const sortedData = [...candidates].sort((a, b) => {
+        const dir = sortDir === 'asc' ? 1 : -1;
+        switch (sortKey) {
+            case 'date':
+                return dir * (new Date(a.interviewDate).getTime() - new Date(b.interviewDate).getTime());
+            case 'score':
+                return dir * (a.overallScore - b.overallScore);
+            case 'rank':
+                return dir * a.rank.localeCompare(b.rank);
+            case 'name':
+                return dir * a.name.localeCompare(b.name);
+            default:
+                return 0;
+        }
+    });
 
     const stats = {
         total: candidates.length,
         completed: candidates.filter((c) => c.status === 'completed').length,
-        avgScore: (
+        avgScore: candidates.length > 0 ? (
             candidates.reduce((sum, c) => sum + c.overallScore, 0) / candidates.length
-        ).toFixed(1),
+        ).toFixed(1) : '0.0',
     };
 
     const toggleSort = (key: SortKey) => {
@@ -199,7 +195,7 @@ export default function DashboardPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filtered.map((candidate) => {
+                        {sortedData.map((candidate) => {
                             const statusConfig = getStatusConfig(candidate.status);
                             return (
                                 <tr
@@ -254,7 +250,7 @@ export default function DashboardPage() {
                     </tbody>
                 </table>
 
-                {filtered.length === 0 && (
+                {sortedData.length === 0 && (
                     <div className="p-12 text-center">
                         <p className="text-text-muted">該当する候補者が見つかりません</p>
                     </div>

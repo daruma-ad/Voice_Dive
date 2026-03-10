@@ -12,8 +12,10 @@ import {
     CalendarDays,
     GraduationCap,
     Sparkles,
+    Loader2,
 } from 'lucide-react';
-import { getCandidateById, formatDate, formatDuration } from '@/lib/mockData';
+import { formatDate, formatDuration } from '@/lib/mockData';
+import { useCandidate } from '@/hooks/useFirestore';
 import RankBadge from '@/components/RankBadge';
 import RadarChart from '@/components/RadarChart';
 import ScoreCard from '@/components/ScoreCard';
@@ -27,7 +29,27 @@ export default function CandidateDetailPage({
     params: Promise<{ candidateId: string }>;
 }) {
     const { candidateId } = use(params);
-    const candidate = getCandidateById(candidateId);
+    const { candidate, loading, error } = useCandidate(candidateId);
+
+    if (loading) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 text-accent-primary animate-spin mb-4" />
+                <p className="text-text-secondary">候補者データを読み込み中...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                <div className="glass-card p-6 text-center max-w-md border-accent-danger/20">
+                    <p className="text-accent-danger mb-4">エラーが発生しました</p>
+                    <p className="text-sm text-text-secondary">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!candidate) {
         notFound();
