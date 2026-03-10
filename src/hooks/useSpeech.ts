@@ -32,6 +32,7 @@ export function useSpeech(): UseSpeechReturn {
     const [interimTranscript, setInterimTranscript] = useState('');
     const recognitionRef = useRef<any>(null);
     const shouldListenRef = useRef(false);
+    const accumulatedTranscriptRef = useRef('');
 
     // TTS
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -47,35 +48,37 @@ export function useSpeech(): UseSpeechReturn {
                 recognitionRef.current.interimResults = true;
                 recognitionRef.current.lang = 'ja-JP';
 
-                // 既に処理された final result のインデックスを追跡する
-                let lastProcessedIndex = -1;
+                // セッションごとの最新の確定テキスト
+                let currentSessionFinal = '';
 
                 recognitionRef.current.onstart = () => {
-                    // 自動再起動などでセッションが新しくなるたびにインデックスをリセットする
-                    lastProcessedIndex = -1;
+                    currentSessionFinal = '';
+                    setInterimTranscript('');
                 };
 
                 recognitionRef.current.onresult = (event: any) => {
                     let interim = '';
                     let final = '';
 
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    // Android Chrome等では1つのセッション中、event.results[0]から毎回全量送られてくることが多い
+                    for (let i = 0; i < event.results.length; ++i) {
                         const transcriptSegment = event.results[i][0].transcript;
                         if (event.results[i].isFinal) {
-                            // Android Chromeなどでは同じfinal結果が何度も呼ばれることがあるため
-                            // 既に処理したインデックスはスキップする
-                            if (i > lastProcessedIndex) {
-                                final += transcriptSegment;
-                                lastProcessedIndex = i;
-                            }
+                            final += transcriptSegment;
                         } else {
                             interim += transcriptSegment;
                         }
                     }
 
-                    if (final) {
-                        setTranscript((prev) => prev + final);
-                    }
+                    currentSessionFinal = final;
+
+                    // 画面表示用テキスト = 過去セッションまでの蓄積分 + 今のセッションでの確定分
+                    setTranscript((prev) => {
+                        // prevを使って自己参照すると再描画タイミングで重複する可能性があるため、
+                        // refを使って蓄積テキストを管理します。
+                        return accumulatedTranscriptRef.current + currentSessionFinal;
+                    });
+
                     setInterimTranscript(interim);
                 };
 
@@ -89,6 +92,11 @@ export function useSpeech(): UseSpeechReturn {
                 };
 
                 recognitionRef.current.onend = () => {
+                    // セッションが終わった（または途切れた）時点で、
+                    // そのセッションで確定したテキストを全体蓄積バッファにコミットする
+                    accumulatedTranscriptRef.current += currentSessionFinal;
+                    currentSessionFinal = '';
+
                     // ユーザーが意図的に止めていない場合は自動的に再起動する（Chromeの無音停止対策）
                     if (shouldListenRef.current) {
                         try {
@@ -154,6 +162,7 @@ export function useSpeech(): UseSpeechReturn {
     const resetTranscript = useCallback(() => {
         setTranscript('');
         setInterimTranscript('');
+        accumulatedTranscriptRef.current = '';
     }, []);
 
     const speak = useCallback((text: string): Promise<void> => {
