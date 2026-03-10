@@ -8,6 +8,7 @@ export default function CompletePage() {
     const [showContent, setShowContent] = useState(false);
     const [evalData, setEvalData] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(true);
+    const [interviewMode, setInterviewMode] = useState<'practice' | 'real'>('real');
 
     useEffect(() => {
         setTimeout(() => setShowContent(true), 500);
@@ -17,72 +18,76 @@ export default function CompletePage() {
                 const rawName = sessionStorage.getItem('voicedive_candidate_name') || 'ゲスト';
                 const resumeSummary = sessionStorage.getItem('voicedive_resume_summary');
                 const rawEval = sessionStorage.getItem('voicedive_evaluation');
+                const mode = (sessionStorage.getItem('voicedive_interview_mode') as 'practice' | 'real') || 'real';
+                setInterviewMode(mode);
 
                 if (rawEval) {
                     const parsed = JSON.parse(rawEval);
                     setEvalData(parsed);
 
-                    // Firestore save (Mock or Real)
-                    const { addCandidate } = await import('@/hooks/useFirestore');
+                    // Firestore save (Mock or Real) only if real mode
+                    if (mode === 'real') {
+                        const { addCandidate } = await import('@/hooks/useFirestore');
 
-                    const newCandidate = {
-                        name: rawName,
-                        nameReading: rawName, // For real app, could get this from parsing or input
-                        nationality: '未設定', // For real app, could extract
-                        nationalityFlag: '🇺🇳',
-                        desiredPosition: 'ホールスタッフ',
-                        status: 'interviewed' as any,
-                        interviewDate: new Date().toISOString(),
-                        overallScore: parsed.overall_score || 0,
-                        rank: parsed.rank || 'E',
-                        scores: {
-                            listening: parsed.scores?.find((s: any) => s.category.includes('流暢'))?.score || 3.0,
-                            keigo: parsed.scores?.find((s: any) => s.category.includes('敬語'))?.score || 3.0,
-                            tone: parsed.scores?.find((s: any) => s.category.includes('ホスピタリティ'))?.score || 3.0,
-                            adaptability: parsed.scores?.find((s: any) => s.category.includes('臨機応変'))?.score || 3.0,
-                            regionalFit: parsed.scores?.find((s: any) => s.category.includes('語彙'))?.score || 3.0,
-                        },
-                        highlights: parsed.highlights?.map((h: any, i: number) => ({
-                            type: h.type === 'best' ? 'best' : 'challenge',
-                            label: h.label,
-                            startTime: i * 60, // Mock timestamp
-                            endTime: i * 60 + 15,
-                            transcript: h.transcript,
-                        })) || [],
-                        aiComment: parsed.ai_comment || '',
-                        scenarios: [
-                            {
-                                id: 's1',
-                                name: 'シナリオA',
-                                description: '面接シナリオ',
-                                result: 'pass' as any,
-                                score: parsed.overall_score || 3.0,
-                                feedback: parsed.ai_comment,
-                                improvementPoints: []
+                        const newCandidate = {
+                            name: rawName,
+                            nameReading: rawName, // For real app, could get this from parsing or input
+                            nationality: '未設定', // For real app, could extract
+                            nationalityFlag: '🇺🇳',
+                            desiredPosition: 'ホールスタッフ',
+                            status: 'interviewed' as any,
+                            interviewDate: new Date().toISOString(),
+                            overallScore: parsed.overall_score || 0,
+                            rank: parsed.rank || 'E',
+                            scores: {
+                                listening: parsed.scores?.find((s: any) => s.category.includes('流暢'))?.score || 3.0,
+                                keigo: parsed.scores?.find((s: any) => s.category.includes('敬語'))?.score || 3.0,
+                                tone: parsed.scores?.find((s: any) => s.category.includes('ホスピタリティ'))?.score || 3.0,
+                                adaptability: parsed.scores?.find((s: any) => s.category.includes('臨機応変'))?.score || 3.0,
+                                regionalFit: parsed.scores?.find((s: any) => s.category.includes('語彙'))?.score || 3.0,
                             },
-                        ],
-                        onboardingAdvice: parsed.onboarding_advice?.map((a: any) => ({
-                            priority: a.priority,
-                            category: a.category,
-                            advice: a.advice
-                        })) || [],
-                        responseTimeAvg: 2.0,
-                        interviewDuration: 600,
-                    };
+                            highlights: parsed.highlights?.map((h: any, i: number) => ({
+                                type: h.type === 'best' ? 'best' : 'challenge',
+                                label: h.label,
+                                startTime: i * 60, // Mock timestamp
+                                endTime: i * 60 + 15,
+                                transcript: h.transcript,
+                            })) || [],
+                            aiComment: parsed.ai_comment || '',
+                            scenarios: [
+                                {
+                                    id: 's1',
+                                    name: 'シナリオA',
+                                    description: '面接シナリオ',
+                                    result: 'pass' as any,
+                                    score: parsed.overall_score || 3.0,
+                                    feedback: parsed.ai_comment,
+                                    improvementPoints: []
+                                },
+                            ],
+                            onboardingAdvice: parsed.onboarding_advice?.map((a: any) => ({
+                                priority: a.priority,
+                                category: a.category,
+                                advice: a.advice
+                            })) || [],
+                            responseTimeAvg: 2.0,
+                            interviewDuration: 600,
+                        };
 
-                    try {
-                        // Firestoreの通信（特にモバイル環境）がスタックして画面が止まるのを防ぐため、
-                        // 3秒でタイムアウトさせる（バックグラウンドでの保存自体はFirestore SDK側で継続される）
-                        const timeoutPromise = new Promise((_, reject) => {
-                            setTimeout(() => reject(new Error('Firebase timeout')), 3000);
-                        });
+                        try {
+                            // Firestoreの通信（特にモバイル環境）がスタックして画面が止まるのを防ぐため、
+                            // 3秒でタイムアウトさせる（バックグラウンドでの保存自体はFirestore SDK側で継続される）
+                            const timeoutPromise = new Promise((_, reject) => {
+                                setTimeout(() => reject(new Error('Firebase timeout')), 3000);
+                            });
 
-                        await Promise.race([
-                            addCandidate(newCandidate),
-                            timeoutPromise
-                        ]);
-                    } catch (err) {
-                        console.error('Failed to save candidate report:', err);
+                            await Promise.race([
+                                addCandidate(newCandidate),
+                                timeoutPromise
+                            ]);
+                        } catch (err) {
+                            console.error('Failed to save candidate report:', err);
+                        }
                     }
                 }
             } catch (err) {
@@ -149,10 +154,10 @@ export default function CompletePage() {
                     お疲れ様でした！
                 </h1>
                 <p className="text-lg text-text-secondary mb-2">
-                    {isSaving ? '結果を保存しています...' : '面接が完了しました'}
+                    {isSaving ? '結果を処理しています...' : '面接が完了しました'}
                 </p>
                 <p className="text-sm text-text-muted mb-8">
-                    {isSaving ? 'Saving your results...' : 'Great job! The interview is complete.'}
+                    {isSaving ? 'Processing your results...' : 'Great job! The interview is complete.'}
                 </p>
 
                 {/* Info Card */}
@@ -173,19 +178,35 @@ export default function CompletePage() {
                         </div>
 
                         <div className="border-t border-card-border pt-4 mt-2">
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
-                                    ✅
+                            {interviewMode === 'real' ? (
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                                        ✅
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground mb-1">
+                                            データ送信完了
+                                        </p>
+                                        <p className="text-xs text-text-secondary">
+                                            結果は採用担当者に送信されました。後日ご連絡いたします。
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-medium text-foreground mb-1">
-                                        データ送信完了
-                                    </p>
-                                    <p className="text-xs text-text-secondary">
-                                        結果は採用担当者に送信されました。後日ご連絡いたします。
-                                    </p>
+                            ) : (
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+                                        🟢
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground mb-1">
+                                            練習お疲れ様でした
+                                        </p>
+                                        <p className="text-xs text-text-secondary">
+                                            今回は練習モードのため、結果はシステムや採用担当者には送信されていません。何度でも挑戦してみてください。
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 )}

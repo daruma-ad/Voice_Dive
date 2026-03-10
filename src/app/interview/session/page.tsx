@@ -123,6 +123,13 @@ export default function SessionPage() {
         }
     }, [aiState, isListening, startListening, stopListening, transcript, resetTranscript, sessionId, speak, router]);
 
+    const [interviewMode, setInterviewMode] = useState<'practice' | 'real'>('real');
+
+    useEffect(() => {
+        const mode = sessionStorage.getItem('voicedive_interview_mode') as 'practice' | 'real';
+        if (mode) setInterviewMode(mode);
+    }, []);
+
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden">
             {/* Background Effects */}
@@ -142,9 +149,20 @@ export default function SessionPage() {
 
             {/* Top Bar */}
             <div className="relative z-10 flex items-center justify-between p-4 border-b border-card-border/50">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-accent-success animate-pulse" />
-                    <span className="text-xs text-text-secondary">面接中</span>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-accent-success animate-pulse" />
+                        <span className="text-xs text-text-secondary">面接中</span>
+                    </div>
+                    {/* Mode Badge */}
+                    {isStarted && (
+                        <div className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${interviewMode === 'practice'
+                            ? 'bg-accent-success/10 text-accent-success border-accent-success/20'
+                            : 'bg-accent-danger/10 text-accent-danger border-accent-danger/20'
+                            }`}>
+                            {interviewMode === 'practice' ? '🟢 練習モード' : '🔴 本番モード'}
+                        </div>
+                    )}
                 </div>
                 <button
                     onClick={() => router.push('/interview')}

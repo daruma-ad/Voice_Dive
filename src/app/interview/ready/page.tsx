@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Mic, ArrowLeft, ArrowRight, CheckCircle, Volume2, AlertCircle } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 export default function ReadyPage() {
+    const router = useRouter();
     const [micPermission, setMicPermission] = useState<'pending' | 'granted' | 'denied'>('pending');
     const [testDone, setTestDone] = useState(false);
     const [isTestingMic, setIsTestingMic] = useState(false);
@@ -41,6 +44,11 @@ export default function ReadyPage() {
             if (result.state === 'granted') setMicPermission('granted');
         }).catch(() => { });
     }, []);
+
+    const handleStart = (mode: 'practice' | 'real') => {
+        sessionStorage.setItem('voicedive_interview_mode', mode);
+        router.push('/interview/session');
+    };
 
     const steps = [
         {
@@ -212,19 +220,33 @@ export default function ReadyPage() {
                     <p>• 分からない時は「もう一度お願いします」と言えます</p>
                 </div>
 
-                {/* Start Button */}
-                <Link
-                    href="/interview/session"
-                    className="inline-flex items-center justify-center gap-3 w-full py-4 px-8 rounded-2xl text-white font-semibold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl"
-                    style={{
-                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                        boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
-                    }}
-                >
-                    面接を開始する
-                    <ArrowRight className="w-5 h-5" />
-                </Link>
-                <p className="text-xs text-text-muted text-center mt-3">Start Interview</p>
+                {/* Start Buttons */}
+                <div className="space-y-3">
+                    <button
+                        onClick={() => handleStart('practice')}
+                        className="inline-flex items-center justify-center gap-3 w-full py-4 px-8 rounded-2xl text-foreground font-semibold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] border border-accent-success/50 hover:bg-accent-success/10"
+                        style={{
+                            boxShadow: '0 4px 20px rgba(16, 185, 129, 0.1)',
+                        }}
+                    >
+                        🟢 練習モードで開始
+                    </button>
+
+                    <button
+                        onClick={() => handleStart('real')}
+                        className="inline-flex items-center justify-center gap-3 w-full py-4 px-8 rounded-2xl text-white font-semibold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl"
+                        style={{
+                            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
+                        }}
+                    >
+                        🔴 本番モードで開始
+                        <ArrowRight className="w-5 h-5" />
+                    </button>
+                    <p className="text-xs text-text-muted text-center mt-2">
+                        本番モードの結果はデータベースに保存されます
+                    </p>
+                </div>
             </div>
         </div>
     );
