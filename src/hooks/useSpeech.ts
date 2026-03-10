@@ -46,16 +46,27 @@ export function useSpeech(): UseSpeechReturn {
                 recognitionRef.current.interimResults = true;
                 recognitionRef.current.lang = 'ja-JP';
 
+                // 既に処理された final result のインデックスを追跡する
+                let lastProcessedIndex = -1;
+
                 recognitionRef.current.onresult = (event: any) => {
-                    let final = '';
                     let interim = '';
+                    let final = '';
+
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        const transcriptSegment = event.results[i][0].transcript;
                         if (event.results[i].isFinal) {
-                            final += event.results[i][0].transcript;
+                            // Android Chromeなどでは同じfinal結果が何度も呼ばれることがあるため
+                            // 既に処理したインデックスはスキップする
+                            if (i > lastProcessedIndex) {
+                                final += transcriptSegment;
+                                lastProcessedIndex = i;
+                            }
                         } else {
-                            interim += event.results[i][0].transcript;
+                            interim += transcriptSegment;
                         }
                     }
+
                     if (final) {
                         setTranscript((prev) => prev + final);
                     }

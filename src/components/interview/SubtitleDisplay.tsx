@@ -5,15 +5,22 @@ import { useEffect, useState } from 'react';
 interface SubtitleDisplayProps {
     text: string;
     isVisible: boolean;
+    instant?: boolean; // 追加: タイピングアニメーションをスキップするかどうか
 }
 
-export default function SubtitleDisplay({ text, isVisible }: SubtitleDisplayProps) {
+export default function SubtitleDisplay({ text, isVisible, instant = false }: SubtitleDisplayProps) {
     const [displayText, setDisplayText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
     useEffect(() => {
         if (!isVisible || !text) {
             setDisplayText('');
+            setIsTyping(false);
+            return;
+        }
+
+        if (instant) {
+            setDisplayText(text);
             setIsTyping(false);
             return;
         }
@@ -33,7 +40,7 @@ export default function SubtitleDisplay({ text, isVisible }: SubtitleDisplayProp
         }, 40);
 
         return () => clearInterval(interval);
-    }, [text, isVisible]);
+    }, [text, isVisible, instant]);
 
     if (!isVisible || !text) return null;
 

@@ -194,7 +194,7 @@ export default function SessionPage() {
                         {/* Subtitle / User Input preview */}
                         <div className="mt-4 w-full">
                             {isListening ? (
-                                <SubtitleDisplay text={interimTranscript || transcript || '話してください...'} isVisible={true} />
+                                <SubtitleDisplay text={interimTranscript || transcript || '話してください...'} isVisible={true} instant={true} />
                             ) : (
                                 <SubtitleDisplay text={subtitleText} isVisible={aiState === 'speaking' || aiState === 'thinking'} />
                             )}
