@@ -57,29 +57,36 @@ export function useSpeech(): UseSpeechReturn {
                 };
 
                 recognitionRef.current.onresult = (event: any) => {
-                    let interim = '';
-                    let final = '';
+                    let finalStr = '';
+                    let interimStr = '';
 
-                    // Android Chrome等では1つのセッション中、event.results[0]から毎回全量送られてくることが多い
                     for (let i = 0; i < event.results.length; ++i) {
-                        const transcriptSegment = event.results[i][0].transcript;
+                        let segment = event.results[i][0].transcript;
+                        let processedSegment = segment;
+
+                        // Android Chrome特有のバグ対策:
+                        // インデックスが進むごとに過去のテキストが丸ごと含まれてしまう現象を防ぐため、
+                        // 1つ前の結果と前方一致する場合は、新しく追加された差分だけを抽出する。
+                        if (i > 0) {
+                            let prevSegment = event.results[i - 1][0].transcript;
+                            if (segment.startsWith(prevSegment) && segment.length > prevSegment.length) {
+                                processedSegment = segment.substring(prevSegment.length);
+                            }
+                        }
+
                         if (event.results[i].isFinal) {
-                            final += transcriptSegment;
+                            finalStr += processedSegment;
                         } else {
-                            interim += transcriptSegment;
+                            interimStr += processedSegment;
                         }
                     }
 
-                    currentSessionFinal = final;
+                    currentSessionFinal = finalStr;
 
                     // 画面表示用テキスト = 過去セッションまでの蓄積分 + 今のセッションでの確定分
-                    setTranscript((prev) => {
-                        // prevを使って自己参照すると再描画タイミングで重複する可能性があるため、
-                        // refを使って蓄積テキストを管理します。
-                        return accumulatedTranscriptRef.current + currentSessionFinal;
-                    });
+                    setTranscript(() => accumulatedTranscriptRef.current + currentSessionFinal);
 
-                    setInterimTranscript(interim);
+                    setInterimTranscript(interimStr);
                 };
 
                 recognitionRef.current.onerror = (event: any) => {
