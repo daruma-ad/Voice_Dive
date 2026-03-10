@@ -31,6 +31,7 @@ export function useSpeech(): UseSpeechReturn {
     const [transcript, setTranscript] = useState('');
     const [interimTranscript, setInterimTranscript] = useState('');
     const recognitionRef = useRef<any>(null);
+    const shouldListenRef = useRef(false);
 
     // TTS
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -75,11 +76,26 @@ export function useSpeech(): UseSpeechReturn {
 
                 recognitionRef.current.onerror = (event: any) => {
                     console.error('Speech recognition error:', event.error);
-                    setIsListening(false);
+                    // 致命的なエラーでなければ、onendで自動再開を試みる
+                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                        shouldListenRef.current = false;
+                        setIsListening(false);
+                    }
                 };
 
                 recognitionRef.current.onend = () => {
-                    setIsListening(false);
+                    // ユーザーが意図的に止めていない場合は自動的に再起動する（Chromeの無音停止対策）
+                    if (shouldListenRef.current) {
+                        try {
+                            recognitionRef.current.start();
+                        } catch (e) {
+                            console.error('Failed to restart recognition:', e);
+                            shouldListenRef.current = false;
+                            setIsListening(false);
+                        }
+                    } else {
+                        setIsListening(false);
+                    }
                 };
             }
 
@@ -90,6 +106,7 @@ export function useSpeech(): UseSpeechReturn {
         return () => {
             if (recognitionRef.current) {
                 try {
+                    shouldListenRef.current = false;
                     recognitionRef.current.stop();
                 } catch (e) { }
             }
@@ -100,30 +117,34 @@ export function useSpeech(): UseSpeechReturn {
     }, []);
 
     const startListening = useCallback(() => {
-        if (recognitionRef.current && !isListening) {
+        if (recognitionRef.current && !shouldListenRef.current) {
             if (synthRef.current?.speaking) {
                 synthRef.current.cancel(); // Stop AI before listening
             }
             try {
+                shouldListenRef.current = true;
                 setInterimTranscript('');
                 recognitionRef.current.start();
                 setIsListening(true);
             } catch (e) {
                 console.error('Failed to start recognition', e);
+                shouldListenRef.current = false;
+                setIsListening(false);
             }
         }
-    }, [isListening]);
+    }, []);
 
     const stopListening = useCallback(() => {
-        if (recognitionRef.current && isListening) {
+        if (recognitionRef.current && shouldListenRef.current) {
             try {
+                shouldListenRef.current = false;
                 recognitionRef.current.stop();
                 setIsListening(false);
             } catch (e) {
                 console.error('Failed to stop recognition', e);
             }
         }
-    }, [isListening]);
+    }, []);
 
     const resetTranscript = useCallback(() => {
         setTranscript('');
