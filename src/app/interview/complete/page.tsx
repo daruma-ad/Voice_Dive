@@ -71,7 +71,16 @@ export default function CompletePage() {
                     };
 
                     try {
-                        await addCandidate(newCandidate);
+                        // Firestoreの通信（特にモバイル環境）がスタックして画面が止まるのを防ぐため、
+                        // 3秒でタイムアウトさせる（バックグラウンドでの保存自体はFirestore SDK側で継続される）
+                        const timeoutPromise = new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error('Firebase timeout')), 3000);
+                        });
+
+                        await Promise.race([
+                            addCandidate(newCandidate),
+                            timeoutPromise
+                        ]);
                     } catch (err) {
                         console.error('Failed to save candidate report:', err);
                     }
@@ -147,7 +156,7 @@ export default function CompletePage() {
                 </p>
 
                 {/* Info Card */}
-                {!isSaving && evalData && (
+                {evalData && (
                     <div className="glass-card p-6 mb-8 text-left space-y-4 fade-in-up">
                         <div className="flex items-start gap-4">
                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
