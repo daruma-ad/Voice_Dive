@@ -47,12 +47,15 @@ export default function SessionPage() {
             setSessionId(res.session_id);
             setCurrentPhase(res.ai_message.phase);
 
-            setChatLog([{ speaker: 'ai', text: res.ai_message.text }]);
-            setSubtitleText(res.ai_message.text);
+            // AIのテキストからマークダウン記号（**など）を取り除く
+            const cleanText = res.ai_message.text.replace(/[*_#`~]+/g, '');
+
+            setChatLog([{ speaker: 'ai', text: cleanText }]);
+            setSubtitleText(cleanText);
 
             // Speak first message
             setAiState('speaking');
-            await speak(res.ai_message.text);
+            await speak(cleanText);
 
             setAiState('listening');
             setSubtitleText('');
@@ -88,12 +91,15 @@ export default function SessionPage() {
             try {
                 const res = await respondToInterview(sessionId, finalUserText);
 
+                // AIのテキストからマークダウン記号（**など）を取り除く
+                const cleanText = res.ai_message.text.replace(/[*_#`~]+/g, '');
+
                 setCurrentPhase(res.ai_message.phase);
-                setChatLog((prev) => [...prev, { speaker: 'ai', text: res.ai_message.text }]);
-                setSubtitleText(res.ai_message.text);
+                setChatLog((prev) => [...prev, { speaker: 'ai', text: cleanText }]);
+                setSubtitleText(cleanText);
 
                 setAiState('speaking');
-                await speak(res.ai_message.text);
+                await speak(cleanText);
 
                 if (res.is_complete) {
                     setSubtitleText('面接が完了しました。評価レポートを作成しています...');
