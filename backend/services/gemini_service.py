@@ -135,6 +135,7 @@ class GeminiService:
         model = genai.GenerativeModel(
             self._model_name,
             system_instruction=INTERVIEW_SYSTEM_PROMPT,
+            generation_config={"response_mime_type": "application/json"}
         )
 
         chat = model.start_chat(history=[])
@@ -224,6 +225,7 @@ class GeminiService:
         model = genai.GenerativeModel(
             self._model_name,
             system_instruction=EVALUATION_SYSTEM_PROMPT,
+            generation_config={"response_mime_type": "application/json"}
         )
 
         prompt = f"""以下の面接会話ログを分析し、評価レポートをJSON形式で生成してください。
@@ -257,7 +259,10 @@ JSON形式で評価レポートを返してください。"""
                 "nationality": None,
             }
 
-        model = genai.GenerativeModel(self._model_name)
+        model = genai.GenerativeModel(
+            self._model_name,
+            generation_config={"response_mime_type": "application/json"}
+        )
         prompt = f"""以下のレジュメのテキストを分析し、JSON形式で返してください:
 ```json
 {{
