@@ -46,6 +46,14 @@ export default function ReadyPage() {
     }, []);
 
     const handleStart = (mode: 'practice' | 'real') => {
+        // iOS Safari対策: ユーザー操作（タップ）を契機にダミーの音声を再生し、
+        // SpeechSynthesisエンジンのロックを解除（アンロック）する
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance('');
+            utterance.volume = 0; // 無音
+            window.speechSynthesis.speak(utterance);
+        }
+
         sessionStorage.setItem('voicedive_interview_mode', mode);
         router.push('/interview/session');
     };

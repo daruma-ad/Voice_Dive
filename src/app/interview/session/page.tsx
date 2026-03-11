@@ -38,6 +38,14 @@ export default function SessionPage() {
         setAiState('thinking');
         setErrorMsg('');
 
+        // iOS Safari対策: ボタンのクリックイベント内でダミー音声を再生し、
+        // その後の非同期処理（API通信後）での音声合成を許可させる
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance('');
+            utterance.volume = 0;
+            window.speechSynthesis.speak(utterance);
+        }
+
         try {
             const candidateName = sessionStorage.getItem('voicedive_candidate_name') || 'ゲスト';
             const resumeText = sessionStorage.getItem('voicedive_resume_summary') || undefined;
