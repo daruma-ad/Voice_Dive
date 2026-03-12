@@ -189,9 +189,12 @@ export function useSpeech(): UseSpeechReturn {
 
             // Try to find a good Japanese female voice
             const voices = synthRef.current.getVoices();
-            const jaVoice = voices.find(v => v.lang === 'ja-JP' && v.name.includes('Female'))
-                || voices.find(v => v.lang === 'ja-JP' && v.name.includes('Google'))
-                || voices.find(v => v.lang === 'ja-JP');
+            // 優先順位: 1. Kyoko (iOS), 2. Female (一般), 3. Google (Chrome), 4. Siri, 5. ja-JP
+            const jaVoice = voices.find(v => v.lang.startsWith('ja') && v.name.includes('Kyoko'))
+                || voices.find(v => v.lang.startsWith('ja') && (v.name.includes('Female') || v.name.includes('女性')))
+                || voices.find(v => v.lang.startsWith('ja') && v.name.includes('Google'))
+                || voices.find(v => v.lang.startsWith('ja') && v.name.includes('Siri'))
+                || voices.find(v => v.lang.startsWith('ja'));
 
             if (jaVoice) {
                 utterance.voice = jaVoice;
