@@ -14,6 +14,19 @@
 | **独自キーワード** | **VoiceDive（ボイスダイブ）**、**AI面接官ミナ**、**練習モード**、**ダイブスコア** |
 | **技術スタック** | Next.js (App Router) / FastAPI / Gemini 2.0 Flash / Web Speech API / Firebase Firestore / Vercel + Render |
 
+### 🔗 サービスURL
+
+| 種別 | URL | 説明 |
+| --- | --- | --- |
+| **フロントエンド（Vercel）** | https://voicedive.vercel.app | ユーザーがアクセスするWebアプリ本体（Next.js） |
+| **バックエンド API（Render）** | https://voicedive-api.onrender.com | AI処理・面接ロジックを担うAPIサーバー（FastAPI） |
+| **GitHub リポジトリ** | https://github.com/daruma-ad/Voice_Dive | ソースコード（フロントエンド + バックエンド） |
+
+> **💡 PR投稿時のURL使い分け案**
+> - **X / Instagram / note**: フロントエンドURL（`voicedive.vercel.app`）を掲載 → ユーザーがすぐ体験できる導線
+> - **Qiita / Zenn（技術記事）**: GitHubリポジトリURLも併記 → エンジニアがコードを確認できる導線
+> - **採用担当者向け提案**: フロントエンドURL + 管理ダッシュボード（`/dashboard`）への言及
+
 ---
 
 ## 2. X (旧Twitter) 用
