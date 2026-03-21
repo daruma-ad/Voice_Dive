@@ -18,13 +18,14 @@
 
 | 種別 | URL | 説明 |
 | --- | --- | --- |
-| **フロントエンド（Vercel）** | https://voicedive.vercel.app | ユーザーがアクセスするWebアプリ本体（Next.js） |
+| **フロントエンド（Vercel）** | https://voice-dive.vercel.app | ユーザーがアクセスするWebアプリ本体（Next.js） |
+| **面接ページ（直リンク）** | https://voice-dive.vercel.app/interview | 実際にAI面接を体験できるページ（PR投稿に最適） |
 | **バックエンド API（Render）** | https://voicedive-api.onrender.com | AI処理・面接ロジックを担うAPIサーバー（FastAPI） |
 | **GitHub リポジトリ** | https://github.com/daruma-ad/Voice_Dive | ソースコード（フロントエンド + バックエンド） |
 
 > **💡 PR投稿時のURL使い分け案**
-> - **X / Instagram / note**: フロントエンドURL（`voicedive.vercel.app`）を掲載 → ユーザーがすぐ体験できる導線
-> - **Qiita / Zenn（技術記事）**: GitHubリポジトリURLも併記 → エンジニアがコードを確認できる導線
+> - **X / Instagram / note**: 面接ページURL（`voice-dive.vercel.app/interview`）を掲載 → タップしてすぐ面接体験できる導線
+> - **Qiita / Zenn（技術記事）**: フロントエンドURL + GitHubリポジトリURLも併記 → エンジニアがコードを確認できる導線
 > - **採用担当者向け提案**: フロントエンドURL + 管理ダッシュボード（`/dashboard`）への言及
 
 ---
